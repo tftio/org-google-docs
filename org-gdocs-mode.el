@@ -155,6 +155,20 @@ Contains keys like :pending-comments, :pending-suggestions, :last-sync.")
 
 ;;; Async CLI Runner
 
+(defcustom org-gdocs-debug nil
+  "If non-nil, log debug messages to *org-gdocs-debug* buffer."
+  :type 'boolean
+  :group 'org-gdocs)
+
+(defun org-gdocs--debug (format-string &rest args)
+  "Log debug message if `org-gdocs-debug' is non-nil."
+  (when org-gdocs-debug
+    (with-current-buffer (get-buffer-create "*org-gdocs-debug*")
+      (goto-char (point-max))
+      (insert (format-time-string "[%H:%M:%S] "))
+      (insert (apply #'format format-string args))
+      (insert "\n"))))
+
 (defun org-gdocs--run-async (subcommand &optional args callback)
   "Run sync SUBCOMMAND asynchronously with ARGS.
 Call CALLBACK with parsed plist result when complete.
@@ -165,12 +179,19 @@ ARGS should be a list of additional arguments."
     (user-error "A sync operation is already in progress"))
   (let* ((file (buffer-file-name))
          (buf (current-buffer))
-         (output-buffer (generate-new-buffer " *org-gdocs-output*"))
+         (output-buffer (generate-new-buffer "*org-gdocs-output*"))
          (cmd-parts (split-string org-gdocs-sync-command))
          (full-cmd (append cmd-parts
                            (list subcommand)
                            args
-                           (list file))))
+                           (list file)))
+         ;; Ensure common paths are in exec-path for GUI Emacs
+         (exec-path (append exec-path '("/usr/local/bin" "/opt/homebrew/bin"
+                                        "~/.local/bin" "~/.cargo/bin")))
+         (process-environment (cons (format "PATH=%s" (string-join exec-path ":"))
+                                    process-environment)))
+    (org-gdocs--debug "Running command: %S" full-cmd)
+    (org-gdocs--debug "exec-path: %S" exec-path)
     (setq org-gdocs--syncing t)
     (setq org-gdocs--error nil)
     (force-mode-line-update)
@@ -178,20 +199,35 @@ ARGS should be a list of additional arguments."
      :name "org-gdocs-sync"
      :buffer output-buffer
      :command full-cmd
+     :stderr (get-buffer-create "*org-gdocs-stderr*")
      :sentinel
      (lambda (proc _event)
+       (org-gdocs--debug "Process event: %s, status: %s" _event (process-status proc))
        (when (eq (process-status proc) 'exit)
          (let ((exit-code (process-exit-status proc))
+               (raw-output "")
                result)
-           (with-current-buffer output-buffer
-             (goto-char (point-min))
-             (condition-case err
-                 (setq result (read (current-buffer)))
-               (error
-                (setq result `(:status "error"
-                               :message ,(format "Failed to parse output: %s"
-                                                 (buffer-string)))))))
-           (kill-buffer output-buffer)
+           (org-gdocs--debug "Exit code: %d" exit-code)
+           (when (buffer-live-p output-buffer)
+             (with-current-buffer output-buffer
+               (setq raw-output (buffer-string))
+               (org-gdocs--debug "Raw output (%d chars): %s"
+                                 (length raw-output)
+                                 (if (> (length raw-output) 500)
+                                     (concat (substring raw-output 0 500) "...")
+                                   raw-output))
+               (goto-char (point-min))
+               (condition-case err
+                   (setq result (read (current-buffer)))
+                 (error
+                  (org-gdocs--debug "Parse error: %S" err)
+                  (setq result `(:status "error"
+                                 :message ,(format "Failed to parse output: %s\nRaw: %s"
+                                                   (error-message-string err)
+                                                   raw-output)))))))
+           ;; Don't kill buffer on error for debugging
+           (if (and (not org-gdocs-debug) (buffer-live-p output-buffer))
+               (kill-buffer output-buffer))
            ;; Update state in the original buffer
            (when (buffer-live-p buf)
              (with-current-buffer buf
