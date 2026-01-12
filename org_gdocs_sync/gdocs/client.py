@@ -257,6 +257,56 @@ class GoogleDocsClient:
             commentId=comment_id,
         ).execute()
 
+    # Folder operations
+
+    def get_or_create_folder(self, name: str, parent_id: str) -> str:
+        """Get or create a folder in Google Drive.
+
+        Args:
+            name: Folder name.
+            parent_id: Parent folder ID.
+
+        Returns:
+            Folder ID.
+
+        Raises:
+            Exception: If folder creation or lookup fails.
+        """
+        try:
+            # Escape backslashes and single quotes in name to prevent query injection
+            escaped_name = name.replace("\\", "\\\\").replace("'", "\\'")
+            # Check if folder exists
+            query = (
+                f"name='{escaped_name}' and "
+                f"'{parent_id}' in parents and "
+                f"mimeType='application/vnd.google-apps.folder' and "
+                f"trashed=false"
+            )
+            response = (
+                self.drive_service.files()
+                .list(q=query, fields="files(id,name)", pageSize=1)
+                .execute()
+            )
+
+            files = response.get("files", [])
+            if files:
+                return files[0]["id"]
+
+            # Create folder
+            file_metadata = {
+                "name": name,
+                "mimeType": "application/vnd.google-apps.folder",
+                "parents": [parent_id],
+            }
+            folder = (
+                self.drive_service.files()
+                .create(body=file_metadata, fields="id")
+                .execute()
+            )
+            return folder["id"]
+        except HttpError as e:
+            raise Exception(f"Failed to get or create folder '{name}': {e}") from e
+
     # Suggestion operations
 
     def extract_suggestions(self, doc: dict[str, Any]) -> list[Suggestion]:
