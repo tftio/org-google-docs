@@ -12,6 +12,7 @@ from ..models import (
     OrgListItem,
     OrgNode,
     OrgParagraph,
+    OrgRenderedImage,
     OrgSrcBlock,
     OrgTable,
     OrgText,
@@ -99,6 +100,8 @@ class OrgToGDocsConverter:
             self._convert_list(node)
         elif node.type == NodeType.LINK:
             self._convert_link(node)
+        elif node.type == NodeType.RENDERED_IMAGE:
+            self._convert_rendered_image(node)
         elif node.type == NodeType.GDOCS_COMMENT_DIRECTIVE:
             # Skip - these are handled separately for posting comments
             pass
@@ -482,6 +485,30 @@ class OrgToGDocsConverter:
                 }
             }
         )
+
+    def _convert_rendered_image(self, node: OrgNode) -> None:
+        """Convert rendered image to inline image insertion."""
+        img = node if isinstance(node, OrgRenderedImage) else None
+        if not img or not img.drive_url:
+            return
+
+        self.requests.append(
+            {
+                "insertInlineImage": {
+                    "location": {"index": self.current_index},
+                    "uri": img.drive_url,
+                    "objectSize": {
+                        "height": {"magnitude": 300, "unit": "PT"},
+                        "width": {"magnitude": 400, "unit": "PT"},
+                    },
+                }
+            }
+        )
+        # Image takes one index position
+        self.current_index += 1
+
+        # Add newline after image
+        self._insert_text("\n")
 
     def _insert_text(self, text: str) -> None:
         """Insert text at current position and update index."""
