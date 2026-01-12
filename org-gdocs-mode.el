@@ -38,7 +38,7 @@
   :group 'org
   :prefix "org-gdocs-")
 
-(defcustom org-gdocs-sync-command "uv run sync"
+(defcustom org-gdocs-sync-command "org-gdocs"
   "Command to run the sync CLI.
 This should be the base command without subcommands or arguments."
   :type 'string
