@@ -3,6 +3,7 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
+from pathlib import Path
 from typing import Any
 
 
@@ -16,6 +17,7 @@ class NodeType(Enum):
     LINK = "link"
     TABLE = "table"
     SRC_BLOCK = "src_block"
+    RENDERED_IMAGE = "rendered_image"
     IMAGE = "image"
     LIST = "list"
     LIST_ITEM = "list_item"
@@ -29,7 +31,7 @@ class NodeType(Enum):
 class OrgNode:
     """Base org-mode AST node."""
 
-    type: NodeType
+    type: NodeType | None = None
     children: list["OrgNode"] = field(default_factory=list)
     properties: dict[str, Any] = field(default_factory=dict)
     start_line: int | None = None
@@ -93,6 +95,20 @@ class OrgSrcBlock(OrgNode):
     def __post_init__(self):
         if self.type is None:
             self.type = NodeType.SRC_BLOCK
+
+
+@dataclass
+class OrgRenderedImage(OrgNode):
+    """A babel block that was rendered to an image file."""
+
+    source_language: str = ""
+    local_path: Path | None = None
+    header_args: str = ""
+    drive_url: str | None = None
+
+    def __post_init__(self):
+        if self.type is None:
+            self.type = NodeType.RENDERED_IMAGE
 
 
 @dataclass
