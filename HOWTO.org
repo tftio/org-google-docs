@@ -1,0 +1,374 @@
+#+TITLE: org-gdocs-sync HOWTO
+#+AUTHOR: org-gdocs-sync
+#+DATE: [2026-01-12 Sun]
+
+* Overview
+
+=org-gdocs-sync= is a CLI tool that synchronizes org-mode documents with Google Docs. It enables a workflow where you author in org-mode while collaborating with team members who use Google Docs.
+
+** Key Features
+
+- Push org-mode content to Google Docs as formatted documents
+- Pull comments and suggestions from Google Docs into org-mode annotations
+- Plist (S-expression) output by default for Emacs integration
+- JSON output available via =--json= flag
+
+** Workflow
+
+#+BEGIN_SRC text
+1. Author document in org-mode (source of truth)
+   ↓
+2. Push to Google Docs (sync push)
+   ↓
+3. Team reviews in Google Docs (adds comments, suggestions)
+   ↓
+4. Pull feedback (sync pull)
+   ↓
+5. Review annotations in org-mode, integrate changes
+   ↓
+6. Push updated content
+   ↓
+7. Repeat from step 3
+#+END_SRC
+
+* Installation
+
+** Prerequisites
+
+- Python 3.10+
+- =uv= package manager (recommended) or =pip=
+- Google Cloud project with Docs and Drive APIs enabled
+
+** Install from source
+
+#+BEGIN_SRC bash
+cd org-google-docs
+uv sync
+#+END_SRC
+
+* Setup
+
+** Google Cloud Configuration
+
+1. Go to https://console.cloud.google.com/
+2. Create a new project (or select existing)
+3. Enable the following APIs:
+   - Google Docs API
+   - Google Drive API
+4. Create OAuth 2.0 credentials:
+   - Go to "APIs & Services" > "Credentials"
+   - Click "Create Credentials" > "OAuth client ID"
+   - Select "Desktop app" as application type
+   - Download the JSON file
+5. Save the credentials file:
+
+#+BEGIN_SRC bash
+mkdir -p ~/.config/org-gdocs-sync
+mv ~/Downloads/client_secret_*.json ~/.config/org-gdocs-sync/credentials.json
+#+END_SRC
+
+** Authenticate
+
+#+BEGIN_SRC bash
+sync setup
+#+END_SRC
+
+This opens a browser window for OAuth consent. After authorizing, the tool stores tokens in =~/.config/org-gdocs-sync/token.pickle=.
+
+* Usage
+
+** Initialize a Document
+
+Create a new Google Doc linked to your org file:
+
+#+BEGIN_SRC bash
+sync init document.org --title "My Project Document"
+#+END_SRC
+
+Or link to an existing Google Doc:
+
+#+BEGIN_SRC bash
+sync init document.org --gdoc-id 1abc123xyz...
+#+END_SRC
+
+This adds metadata to your org file:
+
+#+BEGIN_SRC org
+,#+GDOC_ID: 1abc123xyz...
+,#+LAST_SYNC: 2026-01-12T10:00:00
+#+END_SRC
+
+** Push Content
+
+Upload your org document to Google Docs:
+
+#+BEGIN_SRC bash
+sync push document.org
+#+END_SRC
+
+Output (plist format):
+
+#+BEGIN_SRC elisp
+(:status "success"
+ :gdoc-id "1abc123xyz"
+ :url "https://docs.google.com/document/d/1abc123xyz/edit"
+ :requests-sent 42
+ :comments-posted 0
+ :revision "123")
+#+END_SRC
+
+*** What Gets Pushed
+
+| Org Element          | Google Docs Result        |
+|----------------------+---------------------------|
+| =* Heading=          | Heading 1                 |
+| =** Subheading=      | Heading 2                 |
+| =*bold*=             | Bold text                 |
+| =/italic/=           | Italic text               |
+| =~code~=             | Monospace font            |
+| =[[url][text]]=      | Hyperlink                 |
+| =#+BEGIN_SRC lang=   | Monospace with lang comment |
+| Org tables           | Google Docs tables        |
+| Lists (=- item=)     | Bullet lists              |
+
+*** Posting Comments
+
+Add comments to post in your org file:
+
+#+BEGIN_SRC org
+Some text here.
+
+,#+GDOCS_COMMENT: Should we expand this section?
+
+More text follows.
+#+END_SRC
+
+On push, these become unanchored comments in Google Docs.
+
+** Pull Feedback
+
+Download comments and suggestions from Google Docs:
+
+#+BEGIN_SRC bash
+sync pull document.org
+#+END_SRC
+
+If you have local changes since last sync:
+
+#+BEGIN_SRC bash
+# Create backup first
+sync pull document.org --backup
+
+# Or force pull (overwrites local changes)
+sync pull document.org --force
+#+END_SRC
+
+*** Annotations Format
+
+Pulled feedback appears in =GDOCS_ANNOTATIONS= sections:
+
+#+BEGIN_SRC org
+,* GDOCS_ANNOTATIONS
+
+,*** Comment from alice@example.com [2026-01-12 Sun 14:23]
+:PROPERTIES:
+:COMMENT_ID: abc123
+:ANCHOR: "quoted text"
+:RESOLVED: nil
+:END:
+Can we clarify this section?
+
+,**** Reply from bob@example.com [2026-01-12 Sun 15:00]
+Good point, I'll add more detail.
+
+,*** Suggestion from charlie@example.com [2026-01-12 Sun 16:45]
+:PROPERTIES:
+:SUGG_ID: def456
+:TYPE: insertion
+:STATUS: pending
+:LOCATION: ""
+:END:
+[INSERTION] Additional paragraph text here.
+#+END_SRC
+
+** Check Status
+
+#+BEGIN_SRC bash
+sync status document.org
+#+END_SRC
+
+Output:
+
+#+BEGIN_SRC elisp
+(:status "synced"
+ :gdoc-id "1abc123xyz"
+ :last-sync "2026-01-12T10:00:00"
+ :pending-comments 3
+ :pending-suggestions 1
+ :local-modified nil
+ :url "https://docs.google.com/document/d/1abc123xyz/edit")
+#+END_SRC
+
+** List Pending Items
+
+#+BEGIN_SRC bash
+# List all
+sync list document.org
+
+# List only comments
+sync list document.org --type comments
+
+# List only suggestions
+sync list document.org --type suggestions
+#+END_SRC
+
+** Process Feedback
+
+After integrating a suggestion into your document:
+
+#+BEGIN_SRC bash
+sync integrate document.org def456
+#+END_SRC
+
+After addressing a comment:
+
+#+BEGIN_SRC bash
+sync resolve document.org abc123
+#+END_SRC
+
+These mark annotations with =:STATUS: integrated= or =:RESOLVED: t=.
+
+* Emacs Integration
+
+** Reading CLI Output
+
+The default plist output can be read directly in Elisp:
+
+#+BEGIN_SRC elisp
+(defun my/gdocs-status (file)
+  "Get sync status for FILE."
+  (let ((output (shell-command-to-string
+                 (format "sync status %s" (shell-quote-argument file)))))
+    (read output)))
+
+(defun my/gdocs-push (file)
+  "Push FILE to Google Docs."
+  (let ((result (read (shell-command-to-string
+                       (format "sync push %s" (shell-quote-argument file))))))
+    (if (string= (plist-get result :status) "success")
+        (message "Pushed to %s" (plist-get result :url))
+      (error "Push failed: %s" (plist-get result :message)))))
+#+END_SRC
+
+** Example: Status in Modeline
+
+#+BEGIN_SRC elisp
+(defun my/gdocs-pending-count ()
+  "Return count of pending items for current buffer."
+  (when (and buffer-file-name
+             (string-suffix-p ".org" buffer-file-name))
+    (let ((status (ignore-errors
+                    (read (shell-command-to-string
+                           (format "sync status %s 2>/dev/null"
+                                   (shell-quote-argument buffer-file-name)))))))
+      (when status
+        (let ((comments (plist-get status :pending-comments))
+              (suggestions (plist-get status :pending-suggestions)))
+          (when (or (> comments 0) (> suggestions 0))
+            (format " [GDocs:%d/%d]" comments suggestions)))))))
+#+END_SRC
+
+* Output Formats
+
+** Plist (Default)
+
+All commands output Elisp plists by default:
+
+#+BEGIN_SRC elisp
+(:status "success" :gdoc-id "abc123" :pending-comments 3)
+#+END_SRC
+
+Keys are converted from =snake_case= to =:kebab-case= keywords.
+
+** JSON
+
+Use =--json= flag for JSON output:
+
+#+BEGIN_SRC bash
+sync --json status document.org
+#+END_SRC
+
+#+BEGIN_SRC json
+{
+  "status": "success",
+  "gdoc_id": "abc123",
+  "pending_comments": 3
+}
+#+END_SRC
+
+* Excluded Sections
+
+These sections are NOT pushed to Google Docs:
+
+- =* GDOCS_ANNOTATIONS= - Pending feedback from collaborators
+- =* GDOCS_ARCHIVE= - Processed/resolved annotations
+
+This keeps the Google Doc clean while preserving sync metadata in your org file.
+
+* Troubleshooting
+
+** "No GDOC_ID found"
+
+Run =sync init= first to link your document:
+
+#+BEGIN_SRC bash
+sync init document.org --title "Document Title"
+#+END_SRC
+
+** "Local changes detected"
+
+Your file was modified after the last sync. Options:
+
+#+BEGIN_SRC bash
+# Create backup, then pull
+sync pull document.org --backup
+
+# Force pull (discards local changes)
+sync pull document.org --force
+
+# Or push your changes first
+sync push document.org
+#+END_SRC
+
+** Authentication Issues
+
+Re-authenticate:
+
+#+BEGIN_SRC bash
+sync logout
+sync setup
+#+END_SRC
+
+** API Quota Errors
+
+Google APIs have rate limits. Wait a few minutes and retry.
+
+* Limitations
+
+- Cannot create suggestions programmatically (Google API limitation)
+- Comments posted from org-mode are unanchored (not tied to specific text)
+- Image sync not yet implemented
+- Real-time collaboration not supported (batch sync only)
+
+* Files
+
+| Path | Purpose |
+|------+---------|
+| =~/.config/org-gdocs-sync/credentials.json= | OAuth2 client credentials |
+| =~/.config/org-gdocs-sync/token.pickle= | Stored authentication token |
+
+* See Also
+
+- [[file:org-gdocs-sync-plan.md][Implementation Plan]] - Detailed design document
+- [[https://developers.google.com/docs/api][Google Docs API Reference]]
+- [[https://developers.google.com/drive/api][Google Drive API Reference]]

@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(superpowers:brainstorming)",
+      "Bash(uv sync:*)",
+      "Bash(uv run pytest:*)",
+      "Bash(uv add:*)",
+      "Bash(uv run sync --help:*)",
+      "Bash(uv run sync:*)",
+      "Bash(git init:*)"
+    ]
+  }
+}

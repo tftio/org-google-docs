@@ -1,0 +1,55 @@
+#+TITLE: Test Document for org-gdocs-sync
+#+AUTHOR: Test User
+#+DATE: [2026-01-12 Sun]
+#+GDOC_ID: 1chVCMTY5I9q81N2M1dhCDlowlWj8uh_p8j-p-zkwT7s
+#+LAST_SYNC: 2026-01-12T10:15:56.934082
+#+LAST_PUSH_REV: 1
+#+LAST_PULL_REV: 1
+
+* Introduction
+This is a test document to verify the org-gdocs-sync tool works correctly.
+
+Here's some *bold text* and /italic text/ and ~inline code~.
+
+* Features to Test
+** Text Formatting
+- Bold: *this is bold*
+- Italic: /this is italic/
+- Code: ~this is code~
+- Link: [[https://example.com][Example Website]]
+
+** Code Block
+#+BEGIN_SRC python
+def hello():
+    print("Hello from org-mode!")
+    return 42
+#+END_SRC
+
+** Table
+| Feature  | Status | Priority |
+|----------+--------+----------|
+| Push     | Done   | High     |
+| Pull     | Done   | High     |
+| Comments | Done   | Medium   |
+
+** TODO Task Example
+This is a task that needs to be done.
+
+** DONE Completed Task
+This task is finished.
+
+* Conclusion
+If this renders correctly in Google Docs, the sync is working!
+
+* GDOCS_ANNOTATIONS
+*** Comment from unknown [2026-01-12 Mon 15:02]
+:PROPERTIES: :COMMENT_ID: AAABxaOtbA4 :ANCHOR: "Link: [[https://example.com][Example Website]]" :RESOLVED: nil :END: This isn't correct
+
+*** Comment from unknown [2026-01-12 Mon 15:01]
+:PROPERTIES: :COMMENT_ID: AAABxaOtbA0 :ANCHOR: "" :RESOLVED: nil :END: This comment should appear in the Google Doc after push.
+
+*** Comment from James Black [2026-01-12 Mon 15:02]
+:PROPERTIES: :COMMENT_ID: AAABxaOtbA4 :ANCHOR: "Link: [[https://example.com][Example Website]]" :RESOLVED: nil :END: This isn't correct
+
+*** Comment from James Black [2026-01-12 Mon 15:01]
+:PROPERTIES: :COMMENT_ID: AAABxaOtbA0 :ANCHOR: "" :RESOLVED: nil :END: This comment should appear in the Google Doc after push.

@@ -1,0 +1,44 @@
+#+TITLE: Sample Document
+#+AUTHOR: Test User
+#+DATE: [2026-01-12 Mon]
+#+GDOC_ID: 1abc123xyz
+#+LAST_SYNC: 2026-01-12T10:00:00
+
+* Introduction
+
+This is a sample document for testing the org-mode parser.
+
+Here's a [[https://example.com][link to example]].
+
+#+GDOCS_COMMENT: Should we expand this section?
+
+** Background
+
+Some background information with *bold* and /italic/ text.
+
+| Feature | Status | Priority |
+|---------+--------+----------|
+| Auth    | Done   | High     |
+| API     | WIP    | Medium   |
+
+* TODO Implementation :work:coding:
+
+Need to implement the following:
+
+- First item
+- Second item with [[https://docs.example.com][docs]]
+- Third item
+
+#+BEGIN_SRC python
+def hello():
+    print("world")
+#+END_SRC
+
+** DONE Design Phase
+DEADLINE: <2026-01-15 Mon>
+
+Design is complete.
+
+* Conclusion
+
+Final thoughts here.
