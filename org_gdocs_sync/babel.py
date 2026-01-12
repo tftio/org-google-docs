@@ -13,6 +13,12 @@ class BabelExecutionError(Exception):
     pass
 
 
+class BabelOutputError(Exception):
+    """Raised when expected babel output files are missing."""
+
+    pass
+
+
 def execute_babel(org_path: Path) -> None:
     """Execute org-babel-execute-buffer via Emacs batch mode.
 
@@ -116,3 +122,20 @@ def find_babel_blocks(doc: OrgDocument) -> list[OrgSrcBlock]:
 
     walk(doc.content)
     return blocks
+
+
+def verify_babel_outputs(expected_files: list[Path]) -> None:
+    """Verify all expected output files exist.
+
+    Args:
+        expected_files: List of expected output file paths.
+
+    Raises:
+        BabelOutputError: If any expected file is missing.
+    """
+    missing = [f for f in expected_files if not f.exists()]
+    if missing:
+        missing_str = "\n  ".join(str(f) for f in missing)
+        raise BabelOutputError(
+            f"Babel failed to produce expected output files:\n  {missing_str}"
+        )

@@ -7,10 +7,12 @@ import pytest
 
 from org_gdocs_sync.babel import (
     BabelExecutionError,
+    BabelOutputError,
     execute_babel,
     extract_file_output,
     find_babel_blocks,
     parse_header_args,
+    verify_babel_outputs,
 )
 from org_gdocs_sync.models import NodeType, OrgDocument, OrgHeading, OrgSrcBlock
 
@@ -130,3 +132,27 @@ def test_execute_babel_failure(tmp_path):
             execute_babel(org_file)
 
     assert "Babel error" in str(exc_info.value)
+
+
+def test_verify_babel_outputs_all_present(tmp_path):
+    """Test verification passes when all files exist."""
+    (tmp_path / "diagram.svg").write_text("<svg></svg>")
+    (tmp_path / "graph.png").write_bytes(b"PNG")
+
+    expected = [
+        tmp_path / "diagram.svg",
+        tmp_path / "graph.png",
+    ]
+
+    # Should not raise
+    verify_babel_outputs(expected)
+
+
+def test_verify_babel_outputs_missing_file(tmp_path):
+    """Test verification fails when file is missing."""
+    expected = [tmp_path / "missing.svg"]
+
+    with pytest.raises(BabelOutputError) as exc_info:
+        verify_babel_outputs(expected)
+
+    assert "missing.svg" in str(exc_info.value)
