@@ -1,7 +1,6 @@
 """Command-line interface for org-gdocs-sync."""
 
 import sys
-from pathlib import Path
 
 import click
 
@@ -10,7 +9,6 @@ from .output import print_output
 from .sync.engine import SyncEngine
 from .sync.pull import pull as pull_workflow
 from .sync.push import push as push_workflow
-
 
 # Global option for JSON output
 pass_json = click.make_pass_decorator(dict, ensure=True)

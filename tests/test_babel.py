@@ -1,9 +1,18 @@
 """Tests for babel execution module."""
 
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
-from org_gdocs_sync.babel import parse_header_args, extract_file_output, find_babel_blocks
-from org_gdocs_sync.models import OrgDocument, OrgSrcBlock, OrgHeading, NodeType
+import pytest
+
+from org_gdocs_sync.babel import (
+    BabelExecutionError,
+    execute_babel,
+    extract_file_output,
+    find_babel_blocks,
+    parse_header_args,
+)
+from org_gdocs_sync.models import NodeType, OrgDocument, OrgHeading, OrgSrcBlock
 
 
 def test_parse_header_args_with_file():
@@ -93,3 +102,31 @@ def test_find_babel_blocks_nested_in_heading():
     blocks = find_babel_blocks(doc)
     assert len(blocks) == 1
     assert blocks[0].language == "dot"
+
+
+def test_execute_babel_success(tmp_path):
+    """Test successful babel execution."""
+    org_file = tmp_path / "test.org"
+    org_file.write_text("#+BEGIN_SRC python :file out.txt\nprint('hi')\n#+END_SRC")
+
+    with patch("subprocess.run") as mock_run:
+        mock_run.return_value = MagicMock(returncode=0, stderr="")
+        execute_babel(org_file)
+
+    mock_run.assert_called_once()
+    call_args = mock_run.call_args
+    assert "emacs" in call_args[0][0][0]
+    assert "--batch" in call_args[0][0]
+
+
+def test_execute_babel_failure(tmp_path):
+    """Test babel execution failure raises error."""
+    org_file = tmp_path / "test.org"
+    org_file.write_text("#+BEGIN_SRC bad\n#+END_SRC")
+
+    with patch("subprocess.run") as mock_run:
+        mock_run.return_value = MagicMock(returncode=1, stderr="Babel error")
+        with pytest.raises(BabelExecutionError) as exc_info:
+            execute_babel(org_file)
+
+    assert "Babel error" in str(exc_info.value)

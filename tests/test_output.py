@@ -3,10 +3,10 @@
 import json
 
 from org_gdocs_sync.output import (
+    _to_kebab_case,
     format_output,
     to_plist,
     to_plist_pretty,
-    _to_kebab_case,
 )
 
 

@@ -272,7 +272,7 @@ class GoogleDocsClient:
             List of Suggestion objects.
         """
         suggestions = []
-        suggestion_states = doc.get("suggestionsViewMode", {})
+        doc.get("suggestionsViewMode", {})
 
         # Walk the document content
         body = doc.get("body", {})
@@ -335,7 +335,7 @@ class GoogleDocsClient:
     def _get_suggestion_author(self, doc: dict[str, Any], suggestion_id: str) -> str:
         """Get the author of a suggestion from document metadata."""
         # The suggestionStates contain author info
-        suggested_changes = doc.get("suggestedDocumentStyleChanges", {})
+        doc.get("suggestedDocumentStyleChanges", {})
         # This is simplified - full implementation would traverse suggestion metadata
         return "unknown"
 

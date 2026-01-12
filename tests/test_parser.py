@@ -5,7 +5,6 @@ from pathlib import Path
 from org_gdocs_sync.models import NodeType
 from org_gdocs_sync.org.parser import OrgParser
 
-
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 

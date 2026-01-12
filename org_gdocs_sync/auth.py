@@ -62,7 +62,7 @@ def setup_credentials() -> None:
     """Interactive setup for credentials."""
     print("Setting up Google API credentials...")
     print()
-    print(f"Please place your OAuth2 credentials JSON file at:")
+    print("Please place your OAuth2 credentials JSON file at:")
     print(f"  {CREDENTIALS_FILE}")
     print()
     print("To obtain credentials:")

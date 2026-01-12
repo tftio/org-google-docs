@@ -65,10 +65,7 @@ class SyncEngine:
         pending_suggestions = len(self.converter.get_pending_suggestions(doc))
 
         # Determine status
-        if local_modified:
-            status = SyncStatus.LOCAL_CHANGES
-        else:
-            status = SyncStatus.SYNCED
+        status = SyncStatus.LOCAL_CHANGES if local_modified else SyncStatus.SYNCED
 
         return SyncState(
             status=status,

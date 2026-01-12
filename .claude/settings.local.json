@@ -9,7 +9,28 @@
       "Bash(uv run sync:*)",
       "Bash(git init:*)",
       "Bash(git push)",
-      "Bash(emacs:*)"
+      "Bash(emacs:*)",
+      "Bash(git -C /Users/jfb/Projects/org-google-docs log --oneline -10)",
+      "Bash(uv tool install:*)",
+      "Bash(org-gdocs init:*)",
+      "Bash(uv run ruff check:*)",
+      "Bash(uv run python:*)",
+      "Bash(git -C /Users/jfb/Projects/org-google-docs status)",
+      "Bash(git -C /Users/jfb/Projects/org-google-docs log -1 --format='%an %ae')",
+      "Bash(git -C /Users/jfb/Projects/org-google-docs log -3 --oneline)",
+      "Bash(git -C /Users/jfb/Projects/org-google-docs show 651007c --stat)",
+      "Bash(git -C /Users/jfb/Projects/org-google-docs add org_gdocs_sync/models.py tests/test_models.py)",
+      "Bash(git -C /Users/jfb/Projects/org-google-docs commit --amend --no-edit)",
+      "Bash(git -C /Users/jfb/Projects/org-google-docs diff org_gdocs_sync/models.py org_gdocs_sync/org/parser.py tests/test_parser.py)",
+      "Bash(git -C /Users/jfb/Projects/org-google-docs log --oneline -5)",
+      "Bash(git -C /Users/jfb/Projects/org-google-docs add org_gdocs_sync/models.py org_gdocs_sync/org/parser.py tests/test_parser.py)",
+      "Bash(git -C /Users/jfb/Projects/org-google-docs commit -m \"$\\(cat <<''EOF''\nfeat: capture header args when parsing source blocks\n\nAdd header_args field to OrgSrcBlock model and update the parser regex\nto capture babel header arguments like '':file diagram.svg :exports results''.\nThis enables later stages to identify blocks that need babel execution.\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git -C /Users/jfb/Projects/org-google-docs add:*)",
+      "Bash(git -C /Users/jfb/Projects/org-google-docs commit -m \"$\\(cat <<''EOF''\nfeat: add babel header argument parsing\n\nAdds babel.py module with functions to parse org-babel header arguments:\n- parse_header_args: extracts key-value pairs like :file diagram.svg\n- extract_file_output: determines output file path from :file argument\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(ruff check:*)",
+      "Bash(uv run ruff format:*)",
+      "Bash(/Users/jfb/Projects/org-google-docs/.venv/bin/python -c \"import subprocess; subprocess.run\\([''uv'', ''run'', ''ruff'', ''check'', ''org_gdocs_sync/babel.py'', ''tests/test_babel.py'']\\)\")",
+      "Bash(uvx ruff:*)"
     ]
   }
 }

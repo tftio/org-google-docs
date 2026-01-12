@@ -1,9 +1,51 @@
 """Babel execution via Emacs batch mode."""
 
 import re
+import subprocess
 from pathlib import Path
 
 from .models import NodeType, OrgDocument, OrgNode, OrgSrcBlock
+
+
+class BabelExecutionError(Exception):
+    """Raised when Emacs babel execution fails."""
+
+    pass
+
+
+def execute_babel(org_path: Path) -> None:
+    """Execute org-babel-execute-buffer via Emacs batch mode.
+
+    Args:
+        org_path: Path to the org file.
+
+    Raises:
+        BabelExecutionError: If Emacs exits with non-zero status.
+    """
+    org_path = Path(org_path).resolve()
+
+    cmd = [
+        "emacs",
+        "--batch",
+        "--eval", "(require 'org)",
+        "--eval", "(setq org-confirm-babel-evaluate nil)",
+        "--visit", str(org_path),
+        "--eval", "(org-babel-execute-buffer)",
+        "--kill",
+    ]
+
+    result = subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        cwd=org_path.parent,
+    )
+
+    if result.returncode != 0:
+        raise BabelExecutionError(
+            f"Emacs babel execution failed (exit {result.returncode}):\n"
+            f"{result.stderr}"
+        )
 
 
 def parse_header_args(header_args: str) -> dict[str, str]:

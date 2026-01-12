@@ -359,10 +359,7 @@ class OrgParser:
 
         # Determine list type
         bullet = first_match.group(2) if first_match else "-"
-        if bullet[0].isdigit():
-            list_type = "ordered"
-        else:
-            list_type = "unordered"
+        list_type = "ordered" if bullet[0].isdigit() else "unordered"
 
         current_item = None
         current_content = []

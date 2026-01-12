@@ -17,7 +17,6 @@ from ..models import (
     OrgText,
 )
 
-
 # Sections to exclude from push
 EXCLUDED_SECTIONS = {"GDOCS_ANNOTATIONS", "GDOCS_ARCHIVE"}
 
