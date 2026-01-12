@@ -151,3 +151,63 @@ def test_upload_image_update_existing(tmp_path):
         file_id = client.upload_image(test_image, "folder456")
 
         assert file_id == "existing123"
+
+
+def test_get_parent_folder():
+    """Test getting parent folder of a document."""
+    with (
+        patch("org_gdocs_sync.gdocs.client.get_credentials"),
+        patch("org_gdocs_sync.gdocs.client.build") as mock_build,
+    ):
+        mock_drive = MagicMock()
+        mock_build.return_value = mock_drive
+
+        mock_drive.files().get().execute.return_value = {"parents": ["parent123"]}
+
+        from org_gdocs_sync.gdocs.client import GoogleDocsClient
+
+        client = GoogleDocsClient()
+        parent_id = client.get_parent_folder("doc456")
+
+        assert parent_id == "parent123"
+
+
+def test_get_parent_folder_no_parent():
+    """Test getting parent folder when file has no parent (returns root)."""
+    with (
+        patch("org_gdocs_sync.gdocs.client.get_credentials"),
+        patch("org_gdocs_sync.gdocs.client.build") as mock_build,
+    ):
+        mock_drive = MagicMock()
+        mock_build.return_value = mock_drive
+
+        mock_drive.files().get().execute.return_value = {}
+
+        from org_gdocs_sync.gdocs.client import GoogleDocsClient
+
+        client = GoogleDocsClient()
+        parent_id = client.get_parent_folder("doc456")
+
+        assert parent_id == "root"
+
+
+def test_get_parent_folder_http_error():
+    """Test that HttpError is caught and re-raised with context."""
+    with (
+        patch("org_gdocs_sync.gdocs.client.get_credentials"),
+        patch("org_gdocs_sync.gdocs.client.build") as mock_build,
+    ):
+        mock_drive = MagicMock()
+        mock_build.return_value = mock_drive
+
+        resp = httplib2.Response({"status": 404})
+        mock_drive.files().get().execute.side_effect = HttpError(resp, b"Not Found")
+
+        from org_gdocs_sync.gdocs.client import GoogleDocsClient
+
+        client = GoogleDocsClient()
+
+        with pytest.raises(Exception) as exc_info:
+            client.get_parent_folder("doc456")
+
+        assert "Failed to get parent folder" in str(exc_info.value)

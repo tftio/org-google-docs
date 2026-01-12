@@ -309,6 +309,29 @@ class GoogleDocsClient:
         except HttpError as e:
             raise Exception(f"Failed to get or create folder '{name}': {e}") from e
 
+    def get_parent_folder(self, file_id: str) -> str:
+        """Get the parent folder ID of a file.
+
+        Args:
+            file_id: Google Drive file ID.
+
+        Returns:
+            Parent folder ID, or "root" if no parent.
+
+        Raises:
+            Exception: If API call fails.
+        """
+        try:
+            response = (
+                self.drive_service.files()
+                .get(fileId=file_id, fields="parents")
+                .execute()
+            )
+            parents = response.get("parents", [])
+            return parents[0] if parents else "root"
+        except HttpError as e:
+            raise Exception(f"Failed to get parent folder for file '{file_id}': {e}") from e
+
     def upload_image(self, local_path: Path, folder_id: str) -> str:
         """Upload or update an image file in Drive.
 
