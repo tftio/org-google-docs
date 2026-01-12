@@ -3,6 +3,8 @@
 import re
 from pathlib import Path
 
+from .models import NodeType, OrgDocument, OrgNode, OrgSrcBlock
+
 
 def parse_header_args(header_args: str) -> dict[str, str]:
     """Parse org-babel header arguments into a dictionary.
@@ -46,3 +48,29 @@ def extract_file_output(header_args: str, org_dir: Path) -> Path | None:
     if file_path.is_absolute():
         return file_path
     return org_dir / file_path
+
+
+def find_babel_blocks(doc: OrgDocument) -> list[OrgSrcBlock]:
+    """Find all source blocks with :file output.
+
+    Args:
+        doc: Parsed org document.
+
+    Returns:
+        List of OrgSrcBlock nodes that have :file header args.
+    """
+    blocks = []
+
+    def walk(nodes: list[OrgNode]) -> None:
+        for node in nodes:
+            if node.type == NodeType.SRC_BLOCK:
+                src = node if isinstance(node, OrgSrcBlock) else None
+                if src and src.header_args:
+                    parsed = parse_header_args(src.header_args)
+                    if "file" in parsed:
+                        blocks.append(src)
+            if hasattr(node, "children"):
+                walk(node.children)
+
+    walk(doc.content)
+    return blocks
