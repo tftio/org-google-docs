@@ -1,10 +1,12 @@
 """Google Docs and Drive API client."""
 
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+from googleapiclient.http import MediaFileUpload
 
 from ..auth import get_credentials
 from ..models import Comment, CommentReply, Suggestion
@@ -306,6 +308,75 @@ class GoogleDocsClient:
             return folder["id"]
         except HttpError as e:
             raise Exception(f"Failed to get or create folder '{name}': {e}") from e
+
+    def upload_image(self, local_path: Path, folder_id: str) -> str:
+        """Upload or update an image file in Drive.
+
+        Args:
+            local_path: Path to local image file.
+            folder_id: ID of folder to upload to.
+
+        Returns:
+            File ID of uploaded/updated file.
+
+        Raises:
+            Exception: If upload fails.
+        """
+        local_path = Path(local_path)
+        filename = local_path.name
+
+        # Determine mimetype
+        suffix = local_path.suffix.lower()
+        mimetypes = {
+            ".svg": "image/svg+xml",
+            ".png": "image/png",
+            ".jpg": "image/jpeg",
+            ".jpeg": "image/jpeg",
+            ".gif": "image/gif",
+        }
+        mimetype = mimetypes.get(suffix, "application/octet-stream")
+
+        try:
+            # Escape filename for query (same as get_or_create_folder)
+            escaped_filename = filename.replace("\\", "\\\\").replace("'", "\\'")
+
+            # Check if file exists
+            query = (
+                f"name='{escaped_filename}' and "
+                f"'{folder_id}' in parents and "
+                f"trashed=false"
+            )
+            response = (
+                self.drive_service.files()
+                .list(q=query, fields="files(id)", pageSize=1)
+                .execute()
+            )
+
+            files = response.get("files", [])
+            media = MediaFileUpload(str(local_path), mimetype=mimetype)
+
+            if files:
+                # Update existing file
+                file_id = files[0]["id"]
+                self.drive_service.files().update(
+                    fileId=file_id,
+                    media_body=media,
+                ).execute()
+                return file_id
+            else:
+                # Create new file
+                file_metadata = {
+                    "name": filename,
+                    "parents": [folder_id],
+                }
+                result = (
+                    self.drive_service.files()
+                    .create(body=file_metadata, media_body=media, fields="id")
+                    .execute()
+                )
+                return result["id"]
+        except HttpError as e:
+            raise Exception(f"Failed to upload image '{filename}': {e}") from e
 
     # Suggestion operations
 

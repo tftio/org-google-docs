@@ -96,3 +96,58 @@ def test_get_or_create_folder_http_error():
             client.get_or_create_folder("Test Folder", "parent-123")
 
         assert "Failed to get or create folder" in str(exc_info.value)
+
+
+def test_upload_image(tmp_path):
+    """Test uploading image to Drive."""
+    # Create test image file
+    test_image = tmp_path / "test.svg"
+    test_image.write_text("<svg></svg>")
+
+    with (
+        patch("org_gdocs_sync.gdocs.client.get_credentials"),
+        patch("org_gdocs_sync.gdocs.client.build") as mock_build,
+    ):
+        mock_drive = MagicMock()
+        mock_build.return_value = mock_drive
+
+        # Mock upload
+        mock_drive.files().create().execute.return_value = {
+            "id": "file123",
+        }
+        # Mock file doesn't exist
+        mock_drive.files().list().execute.return_value = {"files": []}
+
+        from org_gdocs_sync.gdocs.client import GoogleDocsClient
+
+        client = GoogleDocsClient()
+        file_id = client.upload_image(test_image, "folder456")
+
+        assert file_id == "file123"
+
+
+def test_upload_image_update_existing(tmp_path):
+    """Test updating existing image in Drive."""
+    test_image = tmp_path / "test.svg"
+    test_image.write_text("<svg></svg>")
+
+    with (
+        patch("org_gdocs_sync.gdocs.client.get_credentials"),
+        patch("org_gdocs_sync.gdocs.client.build") as mock_build,
+    ):
+        mock_drive = MagicMock()
+        mock_build.return_value = mock_drive
+
+        # Mock file exists
+        mock_drive.files().list().execute.return_value = {
+            "files": [{"id": "existing123"}]
+        }
+        # Mock update
+        mock_drive.files().update().execute.return_value = {"id": "existing123"}
+
+        from org_gdocs_sync.gdocs.client import GoogleDocsClient
+
+        client = GoogleDocsClient()
+        file_id = client.upload_image(test_image, "folder456")
+
+        assert file_id == "existing123"
