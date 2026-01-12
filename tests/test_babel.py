@@ -109,7 +109,7 @@ def test_execute_babel_success(tmp_path):
     org_file = tmp_path / "test.org"
     org_file.write_text("#+BEGIN_SRC python :file out.txt\nprint('hi')\n#+END_SRC")
 
-    with patch("subprocess.run") as mock_run:
+    with patch("org_gdocs_sync.babel.subprocess.run") as mock_run:
         mock_run.return_value = MagicMock(returncode=0, stderr="")
         execute_babel(org_file)
 
@@ -124,7 +124,7 @@ def test_execute_babel_failure(tmp_path):
     org_file = tmp_path / "test.org"
     org_file.write_text("#+BEGIN_SRC bad\n#+END_SRC")
 
-    with patch("subprocess.run") as mock_run:
+    with patch("org_gdocs_sync.babel.subprocess.run") as mock_run:
         mock_run.return_value = MagicMock(returncode=1, stderr="Babel error")
         with pytest.raises(BabelExecutionError) as exc_info:
             execute_babel(org_file)
