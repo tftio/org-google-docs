@@ -115,6 +115,35 @@ some code
         assert src.language is None
         assert src.content == "some code"
 
+    def test_src_block_with_file_header(self):
+        """Test parsing source block with :file header argument."""
+        content = '''#+BEGIN_SRC mermaid :file diagram.svg :exports results
+graph TD
+    A --> B
+#+END_SRC
+'''
+        parser = OrgParser()
+        doc = parser.parse_string(content)
+
+        assert len(doc.content) == 1
+        src = doc.content[0]
+        assert src.type == NodeType.SRC_BLOCK
+        assert src.language == "mermaid"
+        assert src.header_args == ":file diagram.svg :exports results"
+        assert "graph TD" in src.content
+
+    def test_src_block_without_header_args(self):
+        """Test parsing source block without header arguments."""
+        content = '''#+BEGIN_SRC python
+print("hello")
+#+END_SRC
+'''
+        parser = OrgParser()
+        doc = parser.parse_string(content)
+
+        src = doc.content[0]
+        assert src.header_args == ""
+
 
 class TestTableParsing:
     def test_simple_table(self):

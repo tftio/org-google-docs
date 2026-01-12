@@ -21,7 +21,7 @@ from ..models import (
 HEADING_RE = re.compile(r"^(\*+)\s+(?:(TODO|DONE|WAITING|CANCELLED)\s+)?(?:\[#([A-Z])\]\s+)?(.*)$")
 METADATA_RE = re.compile(r"^#\+(\w+):\s*(.*)$")
 LINK_RE = re.compile(r"\[\[([^\]]+)\](?:\[([^\]]+)\])?\]")
-SRC_BEGIN_RE = re.compile(r"^#\+BEGIN_SRC\s*(\w*)\s*$", re.IGNORECASE)
+SRC_BEGIN_RE = re.compile(r"^#\+BEGIN_SRC\s*(\w*)\s*(.*)$", re.IGNORECASE)
 SRC_END_RE = re.compile(r"^#\+END_SRC\s*$", re.IGNORECASE)
 TABLE_ROW_RE = re.compile(r"^\s*\|(.+)\|\s*$")
 TABLE_SEP_RE = re.compile(r"^\s*\|[-+]+\|\s*$")
@@ -174,6 +174,7 @@ class OrgParser:
             src_begin_match = SRC_BEGIN_RE.match(line)
             if src_begin_match:
                 language = src_begin_match.group(1) or None
+                header_args = src_begin_match.group(2).strip()
                 content_lines = []
                 block_start = i
                 i += 1
@@ -188,6 +189,7 @@ class OrgParser:
                     type=NodeType.SRC_BLOCK,
                     language=language,
                     content="\n".join(content_lines),
+                    header_args=header_args,
                     start_line=start_line + block_start,
                     end_line=start_line + i,
                 )

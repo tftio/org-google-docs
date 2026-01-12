@@ -91,6 +91,7 @@ class OrgSrcBlock(OrgNode):
 
     language: str | None = None
     content: str = ""
+    header_args: str = ""
 
     def __post_init__(self):
         if self.type is None:
