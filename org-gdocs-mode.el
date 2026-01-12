@@ -488,6 +488,7 @@ Each element is (POS COMMENT-ID ANCHOR RESOLVED)."
 
 ;;; Auto-enable
 
+;;;###autoload
 (defun org-gdocs--maybe-enable ()
   "Enable `org-gdocs-mode' if buffer has GDOC_ID."
   (when (and (derived-mode-p 'org-mode)
