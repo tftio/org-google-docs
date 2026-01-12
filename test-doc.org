@@ -2,7 +2,7 @@
 #+AUTHOR: Test User
 #+DATE: [2026-01-12 Sun]
 #+GDOC_ID: 1chVCMTY5I9q81N2M1dhCDlowlWj8uh_p8j-p-zkwT7s
-#+LAST_SYNC: 2026-01-12T10:15:56.934082
+#+LAST_SYNC: 2026-01-12T11:31:27.084756
 #+LAST_PUSH_REV: 1
 #+LAST_PULL_REV: 1
 
@@ -53,3 +53,18 @@ If this renders correctly in Google Docs, the sync is working!
 
 *** Comment from James Black [2026-01-12 Mon 15:01]
 :PROPERTIES: :COMMENT_ID: AAABxaOtbA0 :ANCHOR: "" :RESOLVED: nil :END: This comment should appear in the Google Doc after push.
+
+*** Comment from James Black [2026-01-12 Mon 15:02]
+:PROPERTIES:
+:COMMENT_ID: AAABxaOtbA4
+:ANCHOR: "Link: [[https://example.com][Example Website]]"
+:RESOLVED: nil
+:END:
+This isn't correct
+*** Comment from James Black [2026-01-12 Mon 15:01]
+:PROPERTIES:
+:COMMENT_ID: AAABxaOtbA0
+:ANCHOR: ""
+:RESOLVED: nil
+:END:
+This comment should appear in the Google Doc after push.

@@ -27,23 +27,34 @@ class GDocsToOrgConverter:
         Annotations are added to GDOCS_ANNOTATIONS sections within each
         top-level heading, or at the document level if no headings exist.
 
+        Skips comments/suggestions that already exist in the document.
+
         Args:
             doc: Org document to modify.
             comments: List of comments from Google Docs.
             suggestions: List of suggestions from Google Docs.
         """
+        # Get existing IDs to avoid duplicates
+        existing_comment_ids = self._get_existing_ids(doc, "COMMENT_ID")
+        existing_suggestion_ids = self._get_existing_ids(doc, "SUGG_ID")
+
         # Group annotations by approximate location
         # For simplicity, we'll add all to a top-level GDOCS_ANNOTATIONS section
         annotation_nodes = []
 
-        # Convert comments to annotation nodes
+        # Convert comments to annotation nodes (skip existing and resolved)
         for comment in comments:
-            if not comment.resolved:  # Skip already resolved comments
-                node = self._comment_to_annotation(comment)
-                annotation_nodes.append(node)
+            if comment.resolved:
+                continue
+            if comment.id in existing_comment_ids:
+                continue
+            node = self._comment_to_annotation(comment)
+            annotation_nodes.append(node)
 
-        # Convert suggestions to annotation nodes
+        # Convert suggestions to annotation nodes (skip existing)
         for suggestion in suggestions:
+            if suggestion.id in existing_suggestion_ids:
+                continue
             node = self._suggestion_to_annotation(suggestion)
             annotation_nodes.append(node)
 
@@ -250,6 +261,30 @@ class GDocsToOrgConverter:
             return False
 
         return remove_from_nodes(doc.content)
+
+    def _get_existing_ids(self, doc: OrgDocument, id_property: str) -> set[str]:
+        """Get all existing annotation IDs of a given type.
+
+        Args:
+            doc: Org document to search.
+            id_property: Property name to look for (COMMENT_ID or SUGG_ID).
+
+        Returns:
+            Set of existing IDs.
+        """
+        ids: set[str] = set()
+
+        def search_nodes(nodes: list[OrgNode]) -> None:
+            for node in nodes:
+                if node.type == NodeType.HEADING:
+                    heading = node if isinstance(node, OrgHeading) else None
+                    if heading:
+                        if id_property in heading.properties:
+                            ids.add(heading.properties[id_property])
+                        search_nodes(heading.children)
+
+        search_nodes(doc.content)
+        return ids
 
     def get_pending_comments(self, doc: OrgDocument) -> list[OrgHeading]:
         """Get all unresolved comment annotations.
