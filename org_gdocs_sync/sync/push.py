@@ -132,6 +132,9 @@ def push(org_path: str, force: bool = False) -> dict:
     if not gdoc_id:
         raise ValueError("No GDOC_ID found in document. Run 'sync init' first.")
 
+    # Process babel blocks (execute, upload images, replace with rendered nodes)
+    doc = process_babel_blocks(doc, gdoc_id, client)
+
     # Convert org content to Google Docs requests
     requests = converter.convert(doc)
 
