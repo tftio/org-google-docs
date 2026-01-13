@@ -48,3 +48,5 @@ token.pickle
 # Backups
 *.backup.*
 *.org.backup
+
+.claude/settings.local.json

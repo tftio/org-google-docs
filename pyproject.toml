@@ -46,5 +46,14 @@ python_files = ["test_*.py"]
 
 [dependency-groups]
 dev = [
+    "commitizen>=4.11.2",
+    "interrogate>=1.7.0",
+    "ipython>=8.38.0",
+    "prek>=0.2.27",
     "pytest>=9.0.2",
+    "pytest-cov>=7.0.0",
+    "ruff>=0.14.11",
+    "sphinx-lint>=1.0.2",
+    "ty>=0.0.11",
+    "uv>=0.9.24",
 ]
